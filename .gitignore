@@ -1,0 +1,5 @@
+*.d
+*.so
+*.pcm
+__pycache__
+.DS_Store
