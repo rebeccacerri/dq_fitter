@@ -18,8 +18,8 @@ class DQFitter:
         self.fRooWorkspace     = RooWorkspace('w','workspace')
         self.fParNames         = []
         self.fFitMethod        = "likelyhood"
-        self.fFitRangeMin      = []
-        self.fFitRangeMax      = []
+        self.fFitRangeMin      = minDatasetRange
+        self.fFitRangeMax      = maxDatasetRange
         self.fTrialName        = ""
         self.fMinDatasetRange  = minDatasetRange
         self.fMaxDatasetRange  = maxDatasetRange
@@ -36,8 +36,6 @@ class DQFitter:
         self.fInput = self.fFileIn.Get(self.fInputName)
         if not "TTree" in self.fInput.ClassName():
             self.fInput.Sumw2()
-        self.fFitRangeMin = pdfDict["fitRangeMin"]
-        self.fFitRangeMax = pdfDict["fitRangeMax"]
         self.fDoResidualPlot = pdfDict["doResidualPlot"]
         self.fDoPullPlot = pdfDict["doPullPlot"]
         self.fDoCorrMatPlot = pdfDict["doCorrMatPlot"]
@@ -83,12 +81,9 @@ class DQFitter:
 
                 # Define the pdf associating the parametes previously defined
                 nameFunc = self.fPdfDict["pdf"][i]
-                #nameFunc += "Pdf::{}Pdf(m[{},{}]".format(self.fPdfDict["pdfName"][i],self.fPdfDict["fitRangeMin"][0],self.fPdfDict["fitRangeMax"][0])
                 nameFunc += "Pdf::{}Pdf(m[{},{}]".format(self.fPdfDict["pdfName"][i], self.fMinDatasetRange, self.fMaxDatasetRange)
                 pdfList.append(self.fPdfDict["pdfName"][i])
                 for j in range(0, len(parVal)):
-                    #if "frac" in parName[j]:
-                        #continue
                     nameFunc += ",{}".format(parName[j])
                 nameFunc += ")"
                 self.fRooWorkspace.factory(nameFunc)
@@ -96,22 +91,11 @@ class DQFitter:
                 nameFunc = self.fPdfDict["pdf"][i]
                 nameFunc += "::sum("
                 for j in range(0, len(pdfList)):
-                    #if ("prod" in parName[j]):
-                        #self.fRooWorkspace.factory("{}".format(parName[j]))
-                        # Replace the exression of the parameter with the name of the parameter
-                        #r1 = parName[j].find("::") + 2
-                        #r2 = parName[j].find("(", r1)
-                        #parName[j] = parName[j][r1:r2]
-                        #print("par name -> ", parName[j])
-                        #nameFunc += "{}[{},{},{}]*{}Pdf".format(parName[j], parVal[j], parLimMin[j], parLimMax[j], pdfList[j])
-                        #self.fParNames.append(parName[j])
-                    #else:
                     nameFunc += "{}[{},{},{}]*{}Pdf".format(parName[j], parVal[j], parLimMin[j], parLimMax[j], pdfList[j])
                     self.fParNames.append(parName[j])
                     if not j == len(pdfList) - 1:
                         nameFunc += ","
                 nameFunc += ")"
-                #print(nameFunc)
                 self.fRooWorkspace.factory(nameFunc)
 
     def CheckSignalTails(self, fitRangeMin, fitRangeMax):
@@ -258,33 +242,19 @@ class DQFitter:
             canvasCorrMat = DoCorrMatPlot(rooFitRes, trialName)
             canvasCorrMat.Write()
 
-        rooFitRes.Write("info_fit_results_{}".format(trialName))
-    
-    def MultiTrial(self):
-        '''
-        WARNING! To be fixed, multiple fits do not work properly
-        Method to perform a multi-trial fit
-        '''
-        for iRange in range(0, len(self.fFitRangeMin)):
-            self.FitInvMassSpectrum(self.fFitMethod, self.fFitRangeMin[iRange], self.fFitRangeMax[iRange])
-        self.fFileOut.Close()
+        del self.fRooWorkspace
 
-        # Update file name
-        trialName = self.fTrialName + "_" + str(self.fFitRangeMin[iRange]) + "_" + str(self.fFitRangeMax[iRange]) + ".root"
-        oldFileOutName = self.fFileOutName
-        newFileOutName = oldFileOutName.replace(str(self.fFitRangeMin[iRange]) + "_" + str(self.fFitRangeMax[iRange]) + ".root", trialName)
-        os.rename(oldFileOutName, newFileOutName)
 
-    def SingleFit(self, fitRangeMin, fitRangeMax):
+    def SingleFit(self):
         '''
         Method to perform a single fit (calling multi-trial from external script)
         '''
-        self.FitInvMassSpectrum(self.fFitMethod, fitRangeMin, fitRangeMax)
+        self.FitInvMassSpectrum(self.fFitMethod, self.fFitRangeMin, self.fFitRangeMax)
         self.fFileOut.Close()
 
         # Update file name
-        trialName = self.fTrialName + "_" + str(fitRangeMin) + "_" + str(fitRangeMax) + ".root"
+        trialName = self.fTrialName + "_" + str(self.fFitRangeMin) + "_" + str(self.fFitRangeMax) + ".root"
         oldFileOutName = self.fFileOutName
-        newFileOutName = oldFileOutName.replace(str(fitRangeMin) + "_" + str(fitRangeMax) + ".root", trialName)
+        newFileOutName = oldFileOutName.replace(str(self.fFitRangeMin) + "_" + str(self.fFitRangeMax) + ".root", trialName)
         os.rename(oldFileOutName, newFileOutName)
 
