@@ -10,7 +10,7 @@ class DQFitter:
     def __init__(self, fInName, fInputName, fOutPath, minDatasetRange, maxDatasetRange):
         self.fPdfDict          = {}
         self.fOutPath          = fOutPath
-        self.fFileOutName      = "{}{}__{}_{}.root".format(fOutPath, fInputName, minDatasetRange, maxDatasetRange)
+        self.fFileOutName      = "{}output__{}_{}.root".format(fOutPath, minDatasetRange, maxDatasetRange)
         self.fFileOut          = TFile(self.fFileOutName, "RECREATE")
         self.fFileIn           = TFile.Open(fInName)
         self.fInputName        = fInputName
@@ -33,8 +33,17 @@ class DQFitter:
         Method set the configuration of the fit
         '''
         self.fPdfDict = pdfDict
-        self.fInput = self.fFileIn.Get(self.fInputName)
+        # Exception to take into account the case in which AnalysisResults.root is used
+        if "analysis-same-event-pairing/output" in self.fInputName:
+            hlistIn = self.fFileIn.Get("analysis-same-event-pairing/output")
+            listName = self.fInputName.replace("analysis-same-event-pairing/output/", "")
+            listIn = hlistIn.FindObject(listName.replace("/Mass", ""))
+            self.fInput = listIn.FindObject("Mass")
+        else:
+            self.fInput = self.fFileIn.Get(self.fInputName)
+
         if not "TTree" in self.fInput.ClassName():
+            self.fInput.Rebin(4)
             self.fInput.Sumw2()
         self.fDoResidualPlot = pdfDict["doResidualPlot"]
         self.fDoPullPlot = pdfDict["doPullPlot"]
