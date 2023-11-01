@@ -7,8 +7,6 @@ import os
 import sys
 import math
 import re
-import uncertainties
-from uncertainties import unumpy
 from statistics import mean
 import argparse
 import ROOT
@@ -41,14 +39,6 @@ def ComputeRMS(parValArray):
         stdDev += (parVal - mean) * (parVal - mean)
     stdDev = math.sqrt(stdDev / len(parValArray))
     return stdDev
-
-def PropagateErrorsOnRatio(val1, err1, val2, err2):
-    var1 = unumpy.uarray(val1, err1)
-    var2 = unumpy.uarray(val2, err2)
-    ratio = var2 / var1
-    arrVal = unumpy.nominal_values(ratio)
-    arrErr = unumpy.std_devs(ratio)
-    return arrVal, arrErr
 
 def DoSystematics(path, varBin, parName, fOut):
     '''
