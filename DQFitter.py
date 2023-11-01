@@ -43,7 +43,7 @@ class DQFitter:
             self.fInput = self.fFileIn.Get(self.fInputName)
 
         if not "TTree" in self.fInput.ClassName():
-            self.fInput.Rebin(4)
+            self.fInput.Rebin(pdfDict["rebin"])
             self.fInput.Sumw2()
         self.fDoResidualPlot = pdfDict["doResidualPlot"]
         self.fDoPullPlot = pdfDict["doPullPlot"]
@@ -252,6 +252,7 @@ class DQFitter:
             canvasCorrMat.Write()
 
         del self.fRooWorkspace
+        self.fFileIn.Close()
 
 
     def SingleFit(self):

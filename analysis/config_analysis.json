@@ -36,6 +36,7 @@
         ],
         "fitRangeMin": [2.1],
         "fitRangeMax": [4.9],
+        "rebin": 1,
         "fitMethod": "likelyhood",
         "doResidualPlot": true,
         "doPullPlot": true, 

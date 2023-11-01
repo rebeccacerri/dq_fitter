@@ -34,6 +34,7 @@
       ],
       "fitRangeMin": [2.2, 2],
       "fitRangeMax": [4.8, 5],
+      "rebin": 1,
       "doResidualPlot": true,
       "doPullPlot": true, 
       "doCorrMatPlot": true,

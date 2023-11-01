@@ -136,7 +136,8 @@ def DoAlicePlot(rooDs, pdf, rooPlot, pdfDict, histName, trialName, path, extraTe
 
     # Exception to take into account the case in which AnalysisResults.root is used
     if "analysis-same-event-pairing/output" in histName:
-        histName = "Mass"
+        histName = histName.replace("analysis-same-event-pairing/output", "")
+        histName = histName.replace("/", "_")
     canvasALICE = TCanvas("ALICE_{}_{}".format(histName, trialName), "ALICE_{}_{}".format(histName, trialName), 800, 600)
     canvasALICE.Update()
     canvasALICE.SetLeftMargin(0.15)
