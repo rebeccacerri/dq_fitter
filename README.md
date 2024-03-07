@@ -13,7 +13,6 @@ This python class is based on RooFit and allows to perform binned and unbinned f
   ```
 
 ### Analysis example
-  ```
 - In the analysis repository run the command:
   ```ruby
   python runDQFitter.py config_analysis.json --do_fit
