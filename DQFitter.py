@@ -51,7 +51,10 @@ class DQFitter:
         pdfList = []
         for pdf in self.fPdfDict["pdf"][:-1]:
             self.fTrialName = self.fTrialName + pdf + "_"
-        
+        #if "analysis-same-event-pairing/output" in self.fInputName:
+            #self.fTrialName = listName.replace("/Mass", "") + "_" + self.fTrialName + pdf + "_"
+        #else:
+            #self.fTrialName = self.fInputName + "_" + self.fTrialName + pdf + "_"
         for i in range(0, len(self.fPdfDict["pdf"])):
             if not self.fPdfDict["pdf"][i] == "SUM":
                 gROOT.ProcessLineSync(".x ../fit_library/{}Pdf.cxx+".format(self.fPdfDict["pdf"][i]))
