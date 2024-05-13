@@ -13,7 +13,7 @@ import ROOT
 from os import path
 from ROOT import TGraphErrors, TCanvas, TF1, TFile, TPaveText, TMath, TH1F, TH2F, TString, TLegend, TRatioPlot, TGaxis, TLine, TLatex
 from ROOT import gROOT, gBenchmark, gPad, gStyle, kTRUE, kFALSE, kBlack, kRed, kGray, kDashed
-from plot_library import LoadStyle, SetLatex
+from utils.plot_library import LoadStyle, SetLatex
 
 def StoreHistogramsFromFile(fIn, histType):
     '''
@@ -39,6 +39,28 @@ def ComputeRMS(parValArray):
         stdDev += (parVal - mean) * (parVal - mean)
     stdDev = math.sqrt(stdDev / len(parValArray))
     return stdDev
+
+def ComputeSigToBkg(canvas, sigName, bkgName, minRange, maxRange):
+    '''
+    Method to compute the signal to background ratio after the canvas is created
+    '''
+    listOfPrimitives = canvas.GetListOfPrimitives()
+    for index, primitive in enumerate(listOfPrimitives):
+        if sigName in primitive.GetName():
+            graphSig = listOfPrimitives.At(index)
+        if bkgName in primitive.GetName():
+            graphBkg = listOfPrimitives.At(index)
+
+    histSig = ROOT.TH1F()
+    histBkg = ROOT.TH1F()
+    nPoints = graphSig.GetN()
+    for i in range(0, nPoints):
+        histSig.Fill(graphSig.GetPointX(i), graphSig.GetPointY(i))
+        histBkg.Fill(graphBkg.GetPointX(i), graphBkg.GetPointY(i))
+
+    integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
+    integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
+    return integralSig / integralBkg
 
 def DoSystematics(path, varBin, parName, fOut):
     '''

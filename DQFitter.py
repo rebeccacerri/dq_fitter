@@ -4,7 +4,7 @@ import ROOT
 from ROOT import TCanvas, TFile, TH1F, TPaveText, RooRealVar, RooDataSet, RooWorkspace, RooDataHist, RooArgSet
 from ROOT import gPad, gROOT
 from utils.plot_library import DoResidualPlot, DoPullPlot, DoCorrMatPlot, DoAlicePlot, LoadStyle
-from utils.plot_library import DoPullPlot, DoCorrMatPlot, DoAlicePlot, LoadStyle
+from utils.utils_library import ComputeSigToBkg
 
 class DQFitter:
     def __init__(self, fInName, fInputName, fOutPath, minDatasetRange, maxDatasetRange):
@@ -223,6 +223,13 @@ class DQFitter:
         gPad.SetLeftMargin(0.15)
         fRooPlot.GetYaxis().SetTitleOffset(1.4)
         fRooPlot.Draw()
+
+        sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
+        sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
+        min_range = sig_mean - 3. * sig_width
+        max_range = sig_mean + 3. * sig_width
+        sig_to_bkg = ComputeSigToBkg(canvasFit, "JpsiPdf", "BkgPdf", min_range, max_range)
+        extraText.append("S/B_{3#sigma} = %3.2f" % sig_to_bkg)
         
         # Print the fit result
         rooFitRes.Print()
