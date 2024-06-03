@@ -109,16 +109,22 @@ def DoCorrMatPlot(rooFitRes, trialName):
     histCorrMat.Draw("COLZ")
     return canvasCorrMat
 
-def DoAlicePlot(rooDs, pdf, rooPlot, pdfDict, histName, trialName, path, extraText):
+def DoAlicePlot(rooDs, pdf, rooPlot, pdfDict, histName, trialName, path, extraText, cosmetics):
     # Official fit plot
     rooDs.plotOn(rooPlot, ROOT.RooFit.Name("Data"), ROOT.RooFit.MarkerStyle(20), ROOT.RooFit.MarkerSize(0.5))
     pdf.plotOn(rooPlot, ROOT.RooFit.Name("Fit"), ROOT.RooFit.LineColor(ROOT.kRed+1), ROOT.RooFit.LineWidth(2))
     for i in range(0, len(pdfDict["pdf"])):
         if not pdfDict["pdfName"][i] == "SUM":
             pdf.plotOn(rooPlot, ROOT.RooFit.Components("{}Pdf".format(pdfDict["pdfName"][i])), ROOT.RooFit.Name(pdfDict["pdfNameForLegend"][i]), ROOT.RooFit.LineColor(pdfDict["pdfColor"][i]), ROOT.RooFit.LineStyle(pdfDict["pdfStyle"][i]), ROOT.RooFit.LineWidth(2))
-    rooPlot.SetAxisRange(0, 1.7 * rooPlot.GetMaximum(), "Y")
+    if cosmetics["logScale"]:
+        rooPlot.SetAxisRange(0.1, 1000 * rooPlot.GetMaximum(), "Y")
+    else:
+        rooPlot.SetAxisRange(0, 1.7 * rooPlot.GetMaximum(), "Y")
 
-    legend = ROOT.TLegend(0.65, 0.60, 0.85, 0.89, " ", "brNDC")
+    extraTextPos = cosmetics["extraTextPos"]
+    legendPos = cosmetics["legendPos"]
+
+    legend = ROOT.TLegend(legendPos[0], legendPos[1], legendPos[2], legendPos[3], " ", "brNDC")
     legend.SetBorderSize(0)
     legend.SetFillColor(10)
     legend.SetFillStyle(1)
@@ -139,6 +145,7 @@ def DoAlicePlot(rooDs, pdf, rooPlot, pdfDict, histName, trialName, path, extraTe
         histName = histName.replace("analysis-same-event-pairing/output", "")
         histName = histName.replace("/", "_")
     canvasALICE = TCanvas("ALICE_{}_{}".format(histName, trialName), "ALICE_{}_{}".format(histName, trialName), 800, 600)
+    gPad.SetLogy(cosmetics["logScale"])
     canvasALICE.Update()
     canvasALICE.SetLeftMargin(0.15)
     rooPlot.Draw()
@@ -153,16 +160,16 @@ def DoAlicePlot(rooDs, pdf, rooPlot, pdfDict, histName, trialName, path, extraTe
         letexTitle.DrawLatex(pdfDict["text"][i][0], pdfDict["text"][i][1], pdfDict["text"][i][2])
 
     letexExtraText = TLatex()
-    letexExtraText.SetTextSize(0.04)
+    letexExtraText.SetTextSize(cosmetics["extraTextSize"])
     letexExtraText.SetTextColor(ROOT.kGray+3)
     letexExtraText.SetNDC()
     letexExtraText.SetTextFont(42)
     lineIndex = 0
     for line in extraText:
-        letexExtraText.DrawLatex(0.65, 0.52 - lineIndex, line)
-        lineIndex = lineIndex + 0.06
+        letexExtraText.DrawLatex(extraTextPos[0], extraTextPos[1] - lineIndex, line)
+        lineIndex = lineIndex + cosmetics["extraTextSpacing"]
 
     if not os.path.isdir(path):
         os.system("mkdir -p %s" % (path))
 
-    canvasALICE.SaveAs("{}ALICE_{}_{}.pdf".format(path, histName, trialName))
+    canvasALICE.SaveAs("{}/ALICE_{}_{}.pdf".format(path, histName, trialName))

@@ -4,13 +4,13 @@ import ROOT
 from ROOT import TCanvas, TFile, TH1F, TPaveText, RooRealVar, RooDataSet, RooWorkspace, RooDataHist, RooArgSet
 from ROOT import gPad, gROOT
 from utils.plot_library import DoResidualPlot, DoPullPlot, DoCorrMatPlot, DoAlicePlot, LoadStyle
-from utils.utils_library import ComputeSigToBkg
+from utils.utils_library import ComputeSigToBkg, ComputeSignificance
 
 class DQFitter:
     def __init__(self, fInName, fInputName, fOutPath, minDatasetRange, maxDatasetRange):
         self.fPdfDict          = {}
         self.fOutPath          = fOutPath
-        self.fFileOutName      = "{}output__{}_{}.root".format(fOutPath, minDatasetRange, maxDatasetRange)
+        self.fFileOutName      = "{}/output__{}_{}.root".format(fOutPath, minDatasetRange, maxDatasetRange)
         self.fFileOut          = TFile(self.fFileOutName, "RECREATE")
         self.fFileIn           = TFile.Open(fInName)
         self.fInputName        = fInputName
@@ -27,7 +27,11 @@ class DQFitter:
         self.fDoResidualPlot   = False
         self.fDoPullPlot       = False
         self.fDoCorrMatPlot    = False
-        self.fPrintSB          = False
+        #self.fPrintSB          = False
+        self.fFileOutNameNew   = ""
+
+    def GetFileOutName(self):
+        return self.fFileOutNameNew
 
     def SetFitConfig(self, pdfDict):
         '''
@@ -182,7 +186,7 @@ class DQFitter:
             reduced_chi2 = chi2.getVal() / ndof
 
         index = 1
-        histResults = TH1F("fit_results_{}".format(trialName), "fit_results_{}".format(trialName), len(self.fParNames), 0., len(self.fParNames))
+        histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames), 0., len(self.fParNames))
         for parName in self.fParNames:
             histResults.GetXaxis().SetBinLabel(index, parName)
             histResults.SetBinContent(index, self.fRooWorkspace.var(parName).getVal())
@@ -219,26 +223,38 @@ class DQFitter:
         extraText.append("#chi^{2}/dof = %3.2f" % reduced_chi2)
      
         # Fit plot
-        canvasFit = TCanvas("fit_plot_{}".format(trialName), "fit_plot_{}".format(trialName), 800, 600)
+        canvasFit = TCanvas("fit_plot_{}_{}".format(trialName, self.fInputName), "fit_plot_{}_{}".format(trialName, self.fInputName), 800, 600)
         canvasFit.SetLeftMargin(0.15)
         gPad.SetLeftMargin(0.15)
         fRooPlot.GetYaxis().SetTitleOffset(1.4)
         fRooPlot.Draw()
 
-        if self.fPrintSB:
-            sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
-            sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
-            min_range = sig_mean - 3. * sig_width
-            max_range = sig_mean + 3. * sig_width
-            sig_to_bkg = ComputeSigToBkg(canvasFit, "JpsiPdf", "BkgPdf", min_range, max_range)
-            extraText.append("S/B_{3#sigma} = %3.2f" % sig_to_bkg)
+        for parName in self.fPdfDict["parForAlicePlot"]:
+            if "sOverB_Jpsi" in parName:
+                sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
+                sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
+                min_range = sig_mean - 3. * sig_width
+                max_range = sig_mean + 3. * sig_width
+                sig_to_bkg = ComputeSigToBkg(canvasFit, "JpsiPdf", "BkgPdf", min_range, max_range)
+                extraText.append("S/B_{3#sigma} = %3.2f" % sig_to_bkg)
+            if "sgnf_Jpsi" in parName:
+                sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
+                sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
+                min_range = sig_mean - 3. * sig_width
+                max_range = sig_mean + 3. * sig_width
+                significance = ComputeSignificance(canvasFit, "JpsiPdf", "BkgPdf", min_range, max_range)
+                extraText.append("S/#sqrt{(S+B)}_{3#sigma} = %1.0f" % significance)
+            if "corrMatrStatus" in parName:
+                covMatrixStatus =rooFitRes.covQual()
+                extraText.append("Cov. matrix status= %i" % covMatrixStatus)
         
         # Print the fit result
         rooFitRes.Print()
         
         # Official fit plot
         if self.fPdfDict["doAlicePlot"]:
-            DoAlicePlot(rooDs, pdf, fRooPlotOff, self.fPdfDict, self.fInputName, trialName, self.fOutPath, extraText)
+            cosmetics = self.fPdfDict["cosmeticsForAlicePlot"]
+            DoAlicePlot(rooDs, pdf, fRooPlotOff, self.fPdfDict, self.fInputName, trialName, self.fOutPath, extraText, cosmetics)
 
         # Save results
         self.fFileOut.cd()
@@ -275,8 +291,9 @@ class DQFitter:
         self.fFileOut.Close()
 
         # Update file name
-        trialName = self.fTrialName + "_" + str(self.fFitRangeMin) + "_" + str(self.fFitRangeMax) + ".root"
+        trialName = self.fInputName + "_" + self.fTrialName + "_" + str(self.fFitRangeMin) + "_" + str(self.fFitRangeMax) + ".root"
         oldFileOutName = self.fFileOutName
         newFileOutName = oldFileOutName.replace(str(self.fFitRangeMin) + "_" + str(self.fFitRangeMax) + ".root", trialName)
+        self.fFileOutNameNew = newFileOutName
         os.rename(oldFileOutName, newFileOutName)
 

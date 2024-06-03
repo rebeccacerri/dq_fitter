@@ -62,6 +62,28 @@ def ComputeSigToBkg(canvas, sigName, bkgName, minRange, maxRange):
     integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
     return integralSig / integralBkg
 
+def ComputeSignificance(canvas, sigName, bkgName, minRange, maxRange):
+    '''
+    Method to compute the significance after the canvas is created
+    '''
+    listOfPrimitives = canvas.GetListOfPrimitives()
+    for index, primitive in enumerate(listOfPrimitives):
+        if sigName in primitive.GetName():
+            graphSig = listOfPrimitives.At(index)
+        if bkgName in primitive.GetName():
+            graphBkg = listOfPrimitives.At(index)
+
+    histSig = ROOT.TH1F()
+    histBkg = ROOT.TH1F()
+    nPoints = graphSig.GetN()
+    for i in range(0, nPoints):
+        histSig.Fill(graphSig.GetPointX(i), graphSig.GetPointY(i))
+        histBkg.Fill(graphBkg.GetPointX(i), graphBkg.GetPointY(i))
+
+    integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
+    integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
+    return integralSig / math.sqrt(integralSig+integralBkg)
+
 def DoSystematics(path, varBin, parName, fOut):
     '''
     Method to evaluate the systematic errors from signal extraction
@@ -181,7 +203,7 @@ def CheckVariables(fInNames, parNames, xMin, xMax, fOutName, obs):
     xBins.append(xMax[len(xMin)-1])
     
 
-    fOut = TFile("{}myAnalysis_{}.root".format(fOutName,obs), "RECREATE")
+    fOut = TFile("{}/myAnalysis_{}.root".format(fOutName,obs), "RECREATE")
 
     for parName in parNames:
         parValArray  = array( 'f', [] )
