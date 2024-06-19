@@ -1,0 +1,68 @@
+{
+    "input": {
+      "input_file_name": "AnalysisResults.root",
+      "input_name": [
+        "analysis-same-event-pairing/output/PairsMuonSEPM_muonLowPt510SigmaPDCA/Mass"
+      ],
+      "pdf_dictionary": {
+        "pdf": ["CB2", "CB2", "CB2", "VWG", "SUM"],
+        "pdfName": ["Upsilon1s", "Upsilon2s", "Upsilon3s", "Bkg", "SUM"],
+        "pdfColor": [861, 417, 2, 1],
+        "pdfNameForLegend": ["#Upsilon(1S)", "#Upsilon(2S)", "#Upsilon(3S)", "Background", "Fit"],
+        "pdfStyle": [1, 1, 1, 2],
+        "parVal": [
+          [9.4603, 0.12, 1.016, 2.035, 2.063, 2.247],
+          [10.0233, 0.134, 1.016, 2.035, 2.063, 2.247],
+          [10.3552, 0.139, 1.016, 2.035, 2.063, 2.247],
+          [1.6432, 4.5482e-01, 3.6494e-01],
+          [100, 50, 10, 100000]
+        ],
+        "parLimMin": [
+          [9.1,  0.10, 1.016, 2.035, 2.063, 2.247],
+          [9.7, 0.03, 1.016, 2.035, 2.063, 2.247],
+          [10.0, 0.04, 1.016, 2.035, 2.063, 2.247],
+          [-10, -10, -10],
+          [0, 0, 0, 0]
+        ],
+        "parLimMax": [
+          [9.7, 0.25,  1.016, 2.035, 2.063, 2.247],
+          [10.3, 0.2,  1.016, 2.035, 2.063, 2.247],
+          [10.5, 0.2, 1.016, 2.035, 2.063, 2.247],
+          [10, 10, 10],
+          [50000, 10000, 5000, 500000]
+        ],
+        "parName": [
+          ["mean_Upsilon1s", "width_Upsilon1s", "a_Upsilon1s", "b_Upsilon1s", "c_Upsilon1s", "d_Upsilon1s"],
+          ["sum::mean_Upsilon2s(mean_Upsilon1s,0.5630)", "prod::width_Upsilon2s(width_Upsilon1s,1.0495)", "a_#Upsilon_2s", "b_#Upsilon2s", "c_#Upsilon2s", "d_#Upsilon2s"],
+          ["sum::mean_Upsilon3s(mean_Upsilon1s,0.8949)", "prod::width_Upsilon3s(width_Upsilon1s,1.0794)", "a_#Upsilon_3s", "b_#Upsilon3s", "c_#Upsilon3s", "d_#Upsilon3s"],
+          ["aa", "bb", "cc"],
+          ["sig_Upsilon1s","sig_Upsilon2s", "sig_Upsilon3s", "bkg"]
+        ],
+        "fitRangeMin": [8],
+        "fitRangeMax": [12],
+        "rebin": 1,
+        "fitMethod": "likelyhood",
+        "doResidualPlot": true,
+        "doPullPlot": true, 
+        "doCorrMatPlot": true,
+        "doAlicePlot": true,
+        "cosmeticsForAlicePlot": {
+          "logScale" : false,
+          "extraTextSize" : 0.025,
+          "extraTextSpacing" : 0.04,
+          "extraTextPos" : [0.75, 0.47],
+          "legendPos" : [0.65, 0.60, 0.85, 0.89]
+        },
+        "parForAlicePlot": ["mean_Upsilon1s", "width_Upsilon1s", "sig_Upsilon1s"],
+        "parNameForAlicePlot": ["#mu_{#Upsilon(1S)}", "#sigma_{#Upsilon(1S)}", "#it{N}_{#Upsilon(1S)}"],
+        "text": [
+          [0.20, 0.87, "LHC23 CB2+VWG, #sqrt{#it{s}_{NN}} = 5.36 TeV"], 
+          [0.20, 0.80, "2.5 < #it{y} < 4, #Upsilon(nS) #rightarrow #mu^{+}#mu^{-}"]
+        ]
+      }
+    },
+    "output": {
+      "output_file_name": "LHC23_pass2_golden/bottomonia/",
+      "output_merged_file_name": "multi_trial_CB2_VWG.root"
+    }
+  }
