@@ -40,7 +40,7 @@ def ComputeRMS(parValArray):
     stdDev = math.sqrt(stdDev / len(parValArray))
     return stdDev
 
-def ComputeSigToBkg(canvas, sigName, bkgName, minRange, maxRange):
+def ComputeSigToBkg(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
     '''
     Method to compute the signal to background ratio after the canvas is created
     '''
@@ -51,18 +51,21 @@ def ComputeSigToBkg(canvas, sigName, bkgName, minRange, maxRange):
         if bkgName in primitive.GetName():
             graphBkg = listOfPrimitives.At(index)
 
-    histSig = ROOT.TH1F()
-    histBkg = ROOT.TH1F()
     nPoints = graphSig.GetN()
+    histSig = ROOT.TH1F("histSig", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
+    histBkg = ROOT.TH1F("histBkg", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
     for i in range(0, nPoints):
-        histSig.Fill(graphSig.GetPointX(i), graphSig.GetPointY(i))
-        histBkg.Fill(graphBkg.GetPointX(i), graphBkg.GetPointY(i))
+        histSig.SetBinContent(i+1, graphSig.GetPointY(i))
+        histBkg.SetBinContent(i+1, graphBkg.GetPointY(i))
 
+    integralTot = histSig.Integral(0, 10000)
     integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
     integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
-    return integralSig / integralBkg
+    SIG = (integralSig / integralTot) * sig
+    BKG = (integralBkg / integralTot) * bkg
+    return SIG / BKG
 
-def ComputeSignificance(canvas, sigName, bkgName, minRange, maxRange):
+def ComputeSignificance(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
     '''
     Method to compute the significance after the canvas is created
     '''
@@ -73,16 +76,19 @@ def ComputeSignificance(canvas, sigName, bkgName, minRange, maxRange):
         if bkgName in primitive.GetName():
             graphBkg = listOfPrimitives.At(index)
 
-    histSig = ROOT.TH1F()
-    histBkg = ROOT.TH1F()
     nPoints = graphSig.GetN()
+    histSig = ROOT.TH1F("histSig", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
+    histBkg = ROOT.TH1F("histBkg", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
     for i in range(0, nPoints):
-        histSig.Fill(graphSig.GetPointX(i), graphSig.GetPointY(i))
-        histBkg.Fill(graphBkg.GetPointX(i), graphBkg.GetPointY(i))
+        histSig.SetBinContent(i+1, graphSig.GetPointY(i))
+        histBkg.SetBinContent(i+1, graphBkg.GetPointY(i))
 
+    integralTot = histSig.Integral(0, 10000)
     integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
     integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
-    return integralSig / math.sqrt(integralSig+integralBkg)
+    SIG = (integralSig / integralTot) * sig
+    BKG = (integralBkg / integralTot) * bkg
+    return SIG / math.sqrt(SIG + BKG)
 
 def DoSystematics(path, varBin, parName, fOut):
     '''
@@ -92,6 +98,7 @@ def DoSystematics(path, varBin, parName, fOut):
     gStyle.SetOptStat(0)
     gStyle.SetOptFit(0)
     nameTrialArray = []
+    nameTailArray = []
     trialIndexArray  = array( 'f', [] )
     parValArray  = array( 'f', [] )
     parErrArray = array( 'f', [] )
@@ -109,6 +116,10 @@ def DoSystematics(path, varBin, parName, fOut):
             if "fit_results" in fIn.Get(kname).GetName():
                 trialIndexArray.append(index)
                 nameTrialArray.append(fIn.Get(kname).GetName().replace("fit_results_", ""))
+                if "data_tails" in fInName:
+                    nameTailArray.append("data_tails")
+                if "MC_tails" in fInName:
+                    nameTailArray.append("MC_tails")
                 parValArray.append(fIn.Get(kname).GetBinContent(fIn.Get(kname).GetXaxis().FindBin(parName)))
                 parErrArray.append(fIn.Get(kname).GetBinError(fIn.Get(kname).GetXaxis().FindBin(parName)))
                 index = index + 1
@@ -158,12 +169,19 @@ def DoSystematics(path, varBin, parName, fOut):
     SetLatex(latexTitle)
 
     canvasParVal = TCanvas("canvasParVal", "canvasParVal", 800, 600)
+    canvasParVal.SetBottomMargin(0.6)
     #histGrid = TH2F("histGrid", "", len(parValArray), 0, len(parValArray), 100, 0.7 * max(parValArray), 1.3 * max(parValArray))
     histGrid = TH2F("histGrid", "", len(parValArray), 0, len(parValArray), 100, centralVal-7*systError, centralVal+7*systError)
     indexLabel = 1
     for nameTrial in nameTrialArray:
-        histGrid.GetXaxis().SetBinLabel(indexLabel, nameTrial)
+        indice = nameTrial.find("Proj")
+        if indice != -1:
+            newNameTrial = nameTrial[:indice]
+        else:
+            newNameTrial = nameTrial
+        histGrid.GetXaxis().SetBinLabel(indexLabel, newNameTrial + nameTailArray[indexLabel-1])
         indexLabel += 1
+    histGrid.GetXaxis().LabelsOption("v")
     histGrid.Draw("same")
     linePar.Draw("same")
     lineParStatUp.Draw("same")
@@ -176,7 +194,7 @@ def DoSystematics(path, varBin, parName, fOut):
         if "Psi2s" in parName: latexParName = "N_{#psi(2S)}"
     if "chi2" in parName: latexParName = "#chi^{2}_{FIT}"
 
-    latexTitle.DrawLatex(0.25, 0.85, "%s = #bf{%3.2f} #pm #bf{%3.2f} (%3.2f %%) #pm #bf{%3.2f} (%3.2f %%)" % (latexParName, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
+    latexTitle.DrawLatex(0.25, 0.89, "%s = #bf{%3.2f} #pm #bf{%3.2f} (%3.2f %%) #pm #bf{%3.2f} (%3.2f %%)" % (latexParName, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
     print("%s -> %1.0f ± %1.0f (%3.2f%%) ± %1.0f (%3.2f%%)" % (varBin, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
 
     #num = re.findall(r'[\d\.\d]+', varBin)

@@ -20,16 +20,12 @@ ClassImp(RatioPol1Pol2Pdf);
                         RooAbsReal& _x,
                         RooAbsReal& _P0,
                 	      RooAbsReal& _P1,
-                        RooAbsReal& _P2,
-                        RooAbsReal& _P3,
-                        RooAbsReal& _P4) :
+                        RooAbsReal& _P2) :
    RooAbsPdf(name,title),
    x("x","x",this,_x),
    P0("P0","P0",this,_P0),
    P1("P1","P1",this,_P1),
-   P2("P2","P2",this,_P2),
-   P3("P3","P3",this,_P3),
-   P4("P4","P4",this,_P4)
+   P2("P2","P2",this,_P2)
  {
  }
 
@@ -39,9 +35,7 @@ ClassImp(RatioPol1Pol2Pdf);
    x("x",this,other.x),
    P0("P0",this,other.P0),
    P1("P1",this,other.P1),
-   P2("P2",this,other.P2),
-   P3("P3",this,other.P3),
-   P4("P4",this,other.P4)
+   P2("P2",this,other.P2)
  {
  }
 
@@ -49,5 +43,5 @@ ClassImp(RatioPol1Pol2Pdf);
 
  Double_t RatioPol1Pol2Pdf::evaluate() const
  {
-   return (P0 + P1*x) / (P2 + P3*x + P4*x*x);
+   return (1 + P0*x) / (1 + P1*x + P2*x*x);
  }

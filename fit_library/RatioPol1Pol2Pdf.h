@@ -17,12 +17,10 @@ class RatioPol1Pol2Pdf : public RooAbsPdf {
 public:
   RatioPol1Pol2Pdf() {} ;
   RatioPol1Pol2Pdf(const char *name, const char *title,
-	    RooAbsReal& _x,
-	    RooAbsReal& _P0,
-	    RooAbsReal& _P1,
-        RooAbsReal& _P2,
-        RooAbsReal& _P3,
-        RooAbsReal& _P4);
+	      RooAbsReal& _x,
+	      RooAbsReal& _P0,
+	      RooAbsReal& _P1,
+        RooAbsReal& _P2);
   RatioPol1Pol2Pdf(const RatioPol1Pol2Pdf& other, const char* name=0) ;
   virtual TObject* clone(const char* newname) const { return new RatioPol1Pol2Pdf(*this,newname); }
   inline virtual ~RatioPol1Pol2Pdf() { }
@@ -33,8 +31,6 @@ protected:
   RooRealProxy P0 ;
   RooRealProxy P1 ;
   RooRealProxy P2 ;
-  RooRealProxy P3 ;
-  RooRealProxy P4 ;
 
   Double_t evaluate() const ;
 
