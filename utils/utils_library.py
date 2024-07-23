@@ -58,11 +58,13 @@ def ComputeSigToBkg(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
         histSig.SetBinContent(i+1, graphSig.GetPointY(i))
         histBkg.SetBinContent(i+1, graphBkg.GetPointY(i))
 
-    integralTot = histSig.Integral(0, 10000)
+    integralTotSig = histSig.Integral(0, 10000)
+    integralTotBkg = histBkg.Integral(0, 10000)
     integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
     integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
-    SIG = (integralSig / integralTot) * sig
-    BKG = (integralBkg / integralTot) * bkg
+    SIG = (integralSig / integralTotSig) * sig
+    BKG = (integralBkg / integralTotBkg) * bkg
+    print("------------> ", sig, bkg, " => S frac = ", integralSig, integralTotSig, " => B frac", integralBkg, integralTotBkg)
     return SIG / BKG
 
 def ComputeSignificance(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
@@ -83,12 +85,39 @@ def ComputeSignificance(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
         histSig.SetBinContent(i+1, graphSig.GetPointY(i))
         histBkg.SetBinContent(i+1, graphBkg.GetPointY(i))
 
-    integralTot = histSig.Integral(0, 10000)
+    integralTotSig = histSig.Integral(0, 10000)
+    integralTotBkg = histBkg.Integral(0, 10000)
     integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
     integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
-    SIG = (integralSig / integralTot) * sig
-    BKG = (integralBkg / integralTot) * bkg
+    SIG = (integralSig / integralTotSig) * sig
+    BKG = (integralBkg / integralTotBkg) * bkg
     return SIG / math.sqrt(SIG + BKG)
+
+def ComputeAlpha(canvas, sigName, bkgName, sig, bkg, minRange, maxRange):
+    '''
+    Method to compute the S / (S + B) after the canvas is created
+    '''
+    listOfPrimitives = canvas.GetListOfPrimitives()
+    for index, primitive in enumerate(listOfPrimitives):
+        if sigName in primitive.GetName():
+            graphSig = listOfPrimitives.At(index)
+        if bkgName in primitive.GetName():
+            graphBkg = listOfPrimitives.At(index)
+
+    nPoints = graphSig.GetN()
+    histSig = ROOT.TH1F("histSig", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
+    histBkg = ROOT.TH1F("histBkg", "", nPoints, graphSig.GetPointX(0), graphSig.GetPointX(nPoints-1))
+    for i in range(0, nPoints):
+        histSig.SetBinContent(i+1, graphSig.GetPointY(i))
+        histBkg.SetBinContent(i+1, graphBkg.GetPointY(i))
+
+    integralTotSig = histSig.Integral(0, 10000)
+    integralTotBkg = histBkg.Integral(0, 10000)
+    integralSig = histSig.Integral(histSig.GetXaxis().FindBin(minRange), histSig.GetXaxis().FindBin(maxRange))
+    integralBkg = histBkg.Integral(histBkg.GetXaxis().FindBin(minRange), histBkg.GetXaxis().FindBin(maxRange))
+    SIG = (integralSig / integralTotSig) * sig
+    BKG = (integralBkg / integralTotBkg) * bkg
+    return SIG / (SIG + BKG)
 
 def DoSystematics(path, varBin, parName, fOut):
     '''
@@ -193,6 +222,9 @@ def DoSystematics(path, varBin, parName, fOut):
         if "Jpsi" in parName: latexParName = "N_{J/#psi}"
         if "Psi2s" in parName: latexParName = "N_{#psi(2S)}"
     if "chi2" in parName: latexParName = "#chi^{2}_{FIT}"
+    if "sig_to_bkg" in parName: latexParName = "(S / B)_{3#sigma}"
+    if "significance" in parName: latexParName = "(S / #sqrts{S + B})_{3#sigma}"
+    if "alpha_vn" in parName: latexParName = "#alpha = (S / [S + B])_{3#sigma}"
 
     latexTitle.DrawLatex(0.25, 0.89, "%s = #bf{%3.2f} #pm #bf{%3.2f} (%3.2f %%) #pm #bf{%3.2f} (%3.2f %%)" % (latexParName, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
     print("%s -> %1.0f ± %1.0f (%3.2f%%) ± %1.0f (%3.2f%%)" % (varBin, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))

@@ -4,7 +4,7 @@ import ROOT
 from ROOT import TCanvas, TFile, TH1F, TPaveText, RooRealVar, RooDataSet, RooWorkspace, RooDataHist, RooArgSet
 from ROOT import gPad, gROOT
 from utils.plot_library import DoResidualPlot, DoPullPlot, DoCorrMatPlot, DoAlicePlot, LoadStyle
-from utils.utils_library import ComputeSigToBkg, ComputeSignificance
+from utils.utils_library import ComputeSigToBkg, ComputeSignificance, ComputeAlpha
 
 class DQFitter:
     def __init__(self, fInName, fInputName, fOutPath, minDatasetRange, maxDatasetRange):
@@ -186,7 +186,7 @@ class DQFitter:
             reduced_chi2 = chi2.getVal() / ndof
 
         index = 1
-        histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames), 0., len(self.fParNames))
+        histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames)+4, 0., len(self.fParNames)+4)
         for parName in self.fParNames:
             histResults.GetXaxis().SetBinLabel(index, parName)
             histResults.SetBinContent(index, self.fRooWorkspace.var(parName).getVal())
@@ -238,7 +238,9 @@ class DQFitter:
                 min_range = sig_mean - 3. * sig_width
                 max_range = sig_mean + 3. * sig_width
                 sig_to_bkg = ComputeSigToBkg(canvasFit, "JpsiPdf", "BkgPdf", sigForIntegral, bkgForIntegral, min_range, max_range)
-                extraText.append("S/B_{3#sigma} = %3.2f" % sig_to_bkg)
+                extraText.append("S/B_{3#sigma} = %5.4f" % sig_to_bkg)
+                histResults.GetXaxis().SetBinLabel(index+1, "sig_to_bkg")
+                histResults.SetBinContent(index+1, sig_to_bkg)
             if "sgnf_Jpsi" in parName:
                 sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
                 sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
@@ -248,6 +250,19 @@ class DQFitter:
                 max_range = sig_mean + 3. * sig_width
                 significance = ComputeSignificance(canvasFit, "JpsiPdf", "BkgPdf", sigForIntegral, bkgForIntegral, min_range, max_range)
                 extraText.append("S/#sqrt{(S+B)}_{3#sigma} = %1.0f" % significance)
+                histResults.GetXaxis().SetBinLabel(index+2, "significance")
+                histResults.SetBinContent(index+2, significance)
+            if "alpha_vn_Jpsi" in parName:
+                sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
+                sig_width = self.fRooWorkspace.var("width_Jpsi").getVal()
+                sigForIntegral = self.fRooWorkspace.var("sig_Jpsi").getVal()
+                bkgForIntegral = self.fRooWorkspace.var("bkg").getVal()
+                min_range = sig_mean - 3. * sig_width
+                max_range = sig_mean + 3. * sig_width
+                alpha_vn = ComputeAlpha(canvasFit, "JpsiPdf", "BkgPdf", sigForIntegral, bkgForIntegral, min_range, max_range)
+                extraText.append("(S/S+B)_{3#sigma} = %5.4f" % alpha_vn)
+                histResults.GetXaxis().SetBinLabel(index+3, "alpha_vn")
+                histResults.SetBinContent(index+3, alpha_vn)
             if "corrMatrStatus" in parName:
                 covMatrixStatus =rooFitRes.covQual()
                 extraText.append("Cov. matrix status= %i" % covMatrixStatus)
