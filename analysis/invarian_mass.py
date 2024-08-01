@@ -62,7 +62,8 @@ def main():
     #frame.GetXaxis().SetTitle("#it{m}_{#mu#mu} (GeV/#it{c}^{2})")
     #frame.GetYaxis().SetTitle("Counts per 20 MeV/#it{c}^{2}")
 
-    frame = ROOT.TH2D("histGrid", "", 100, 2.6, 4, 100, 500, 1e7)
+    frame1 = ROOT.TH2D("histGrid1", "", 100, 2.6, 4, 100, 500, 1e7)
+    frame2 = ROOT.TH2D("histGrid2", "", 100, 2.6, 4, 100, 5e2, 1e6)
 
     # Histograms
     histData = listOfPrimitives.At(4)
@@ -79,7 +80,7 @@ def main():
     canvasOut.SetTickx(1)
     canvasOut.SetTicky(1)
     ROOT.gPad.SetLogy(1)
-    frame.Draw()
+    frame1.Draw()
     histData.Draw("EP SAME")
     pdfBkg.Draw("SAME")
     pdfSum.Draw("SAME")
@@ -99,6 +100,19 @@ def main():
 
     letexTitle.DrawLatex(0.18, 0.88, "ALICE Performance, Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
     letexTitle.DrawLatex(0.18, 0.81, "Inclusive J/#psi #rightarrow #mu^{+}#mu^{-}, 2.5 < #it{y} < 4, " + varMin + "#minus" + varMax + "%")
+
+
+    canvasOut.cd()
+    pad = ROOT.TPad("pad1", "pad1", 0.6, 0.6, 0.85, 0.85)
+    pad.Draw()
+    pad.cd()
+    frame2.Draw()
+    ROOT.gPad.SetLogy(True)
+    histData.Draw("EP SAME")
+    pdfBkg.Draw("SAME")
+    pdfSum.Draw("SAME")
+    pdfJpsi.Draw("SAME")
+    pdfPsi2s.Draw("SAME")
 
     canvasOut.Update()
 
