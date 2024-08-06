@@ -127,10 +127,15 @@ def DoSystematics(path, varBin, parName, fOut):
     gStyle.SetOptStat(0)
     gStyle.SetOptFit(0)
     nameTrialArray = []
-    nameTailArray = []
     trialIndexArray  = array( 'f', [] )
     parValArray  = array( 'f', [] )
     parErrArray = array( 'f', [] )
+
+    sigFuncList = ["CB2", "NA60"]
+    bkgFuncList = ["VWG", "Pol4Exp"]
+
+    # Lambda function to check the content of the name
+    contains_any = lambda substr_list, s: any(sub in s for sub in substr_list)
 
     fInNameAllList = os.listdir(path)
     fInNameSelList = [path + "/" + fInName for fInName in fInNameAllList if varBin in fInName]
@@ -144,11 +149,18 @@ def DoSystematics(path, varBin, parName, fOut):
             kname = key.GetName()
             if "fit_results" in fIn.Get(kname).GetName():
                 trialIndexArray.append(index)
-                nameTrialArray.append(fIn.Get(kname).GetName().replace("fit_results_", ""))
                 if "data_tails" in fInName:
-                    nameTailArray.append("data_tails")
+                    nums = re.findall(r'[\d\.\d]+', kname)
+                    fitRange = list(filter(lambda x: '.' in x, nums))[:2]
+                    found_sigFuncs = [sub for sub in sigFuncList if contains_any([sub], kname)]
+                    found_bkgFuncs = [sub for sub in bkgFuncList if contains_any([sub], kname)]
+                    nameTrialArray.append(found_sigFuncs[0] + " + " + found_bkgFuncs[0] + " " + fitRange[0] + " - " + fitRange[1] + " data tails")
                 if "MC_tails" in fInName:
-                    nameTailArray.append("MC_tails")
+                    nums = re.findall(r'[\d\.\d]+', kname)
+                    fitRange = list(filter(lambda x: '.' in x, nums))[:2]
+                    found_sigFuncs = [sub for sub in sigFuncList if contains_any([sub], kname)]
+                    found_bkgFuncs = [sub for sub in bkgFuncList if contains_any([sub], kname)]
+                    nameTrialArray.append(found_sigFuncs[0] + " + " + found_bkgFuncs[0] + " " + fitRange[0] + " - " + fitRange[1] + " MC tails")
                 parValArray.append(fIn.Get(kname).GetBinContent(fIn.Get(kname).GetXaxis().FindBin(parName)))
                 parErrArray.append(fIn.Get(kname).GetBinError(fIn.Get(kname).GetXaxis().FindBin(parName)))
                 index = index + 1
@@ -164,10 +176,7 @@ def DoSystematics(path, varBin, parName, fOut):
     funcParVal.SetLineColor(kRed)
     funcParVal.SetLineWidth(2)
 
-    #centralVal = funcParVal.GetParameter(0)
-    #statError = funcParVal.GetParError(0)
     centralVal = mean(parValArray)
-    #statError = np.std(parValArray, ddof=1) / np.sqrt(np.size(parValArray))
     statError = mean(parErrArray)
     systError = ComputeRMS(parValArray)
 
@@ -198,18 +207,12 @@ def DoSystematics(path, varBin, parName, fOut):
     SetLatex(latexTitle)
 
     canvasParVal = TCanvas("canvasParVal", "canvasParVal", 800, 600)
-    canvasParVal.SetBottomMargin(0.6)
-    #histGrid = TH2F("histGrid", "", len(parValArray), 0, len(parValArray), 100, 0.7 * max(parValArray), 1.3 * max(parValArray))
+    canvasParVal.SetBottomMargin(0.5)
     histGrid = TH2F("histGrid", "", len(parValArray), 0, len(parValArray), 100, centralVal-7*systError, centralVal+7*systError)
-    indexLabel = 1
-    for nameTrial in nameTrialArray:
-        indice = nameTrial.find("Proj")
-        if indice != -1:
-            newNameTrial = nameTrial[:indice]
-        else:
-            newNameTrial = nameTrial
-        histGrid.GetXaxis().SetBinLabel(indexLabel, newNameTrial + nameTailArray[indexLabel-1])
-        indexLabel += 1
+
+    for indexLabel, nameTrial in enumerate(nameTrialArray):
+        histGrid.GetXaxis().SetBinLabel(indexLabel+1, nameTrial)
+
     histGrid.GetXaxis().LabelsOption("v")
     histGrid.Draw("same")
     linePar.Draw("same")
@@ -221,6 +224,12 @@ def DoSystematics(path, varBin, parName, fOut):
     if "sig" in parName:
         if "Jpsi" in parName: latexParName = "N_{J/#psi}"
         if "Psi2s" in parName: latexParName = "N_{#psi(2S)}"
+    if "width" in parName:
+        if "Jpsi" in parName: latexParName = "#sigma_{J/#psi}"
+        if "Psi2s" in parName: latexParName = "#sigma_{#psi(2S)}"
+    if "mean" in parName:
+        if "Jpsi" in parName: latexParName = "#mu_{J/#psi}"
+        if "Psi2s" in parName: latexParName = "#mu_{#psi(2S)}"
     if "chi2" in parName: latexParName = "#chi^{2}_{FIT}"
     if "sig_to_bkg" in parName: latexParName = "(S / B)_{3#sigma}"
     if "significance" in parName: latexParName = "(S / #sqrts{S + B})_{3#sigma}"
@@ -229,9 +238,9 @@ def DoSystematics(path, varBin, parName, fOut):
     latexTitle.DrawLatex(0.25, 0.89, "%s = #bf{%3.2f} #pm #bf{%3.2f} (%3.2f %%) #pm #bf{%3.2f} (%3.2f %%)" % (latexParName, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
     print("%s -> %1.0f ± %1.0f (%3.2f%%) ± %1.0f (%3.2f%%)" % (varBin, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
 
-    #num = re.findall(r'[\d\.\d]+', varBin)
-    #fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (float(num[0]), float(num[1]), centralVal, statError, systError))
-    fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (0, 20, centralVal, statError, systError))
+    num = re.findall(r'[\d\.\d]+', path)
+    fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (float(num[2]), float(num[3]), centralVal, statError, systError))
+    #fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (0, 20, centralVal, statError, systError))
     canvasParVal.SaveAs("{}/systematics/{}_{}.pdf".format(path, varBin, parName))
 
 def CheckVariables(fInNames, parNames, xMin, xMax, fOutName, obs):
