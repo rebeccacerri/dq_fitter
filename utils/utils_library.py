@@ -239,7 +239,7 @@ def DoSystematics(path, varBin, parName, fOut):
     print("%s -> %1.0f ± %1.0f (%3.2f%%) ± %1.0f (%3.2f%%)" % (varBin, centralVal, statError, (statError/centralVal)*100, systError, (systError/centralVal)*100))
 
     num = re.findall(r'[\d\.\d]+', path)
-    fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (float(num[2]), float(num[3]), centralVal, statError, systError))
+    fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (float(num[4]), float(num[5]), centralVal, statError, systError))
     #fOut.write("%3.2f %3.2f %3.2f %3.2f %3.2f \n" % (0, 20, centralVal, statError, systError))
     canvasParVal.SaveAs("{}/systematics/{}_{}.pdf".format(path, varBin, parName))
 

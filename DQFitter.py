@@ -23,11 +23,10 @@ class DQFitter:
         self.fTrialName        = ""
         self.fMinDatasetRange  = minDatasetRange
         self.fMaxDatasetRange  = maxDatasetRange
-        self.fRooMass          = RooRealVar("m", "#it{M} (GeV/#it{c}^{2})", self.fMinDatasetRange, self.fMaxDatasetRange)
+        self.fRooMass          = RooRealVar("fMass", "#it{M} (GeV/#it{c}^{2})", self.fMinDatasetRange, self.fMaxDatasetRange)
         self.fDoResidualPlot   = False
         self.fDoPullPlot       = False
         self.fDoCorrMatPlot    = False
-        #self.fPrintSB          = False
         self.fFileOutNameNew   = ""
 
     def GetFileOutName(self):
@@ -98,7 +97,7 @@ class DQFitter:
 
                 # Define the pdf associating the parametes previously defined
                 nameFunc = self.fPdfDict["pdf"][i]
-                nameFunc += "Pdf::{}Pdf(m[{},{}]".format(self.fPdfDict["pdfName"][i], self.fMinDatasetRange, self.fMaxDatasetRange)
+                nameFunc += "Pdf::{}Pdf(fMass[{},{}]".format(self.fPdfDict["pdfName"][i], self.fMinDatasetRange, self.fMaxDatasetRange)
                 pdfList.append(self.fPdfDict["pdfName"][i])
                 for j in range(0, len(parVal)):
                     nameFunc += ",{}".format(parName[j])
@@ -169,7 +168,7 @@ class DQFitter:
             nbinsperGev = rooDsBinned.numEntries() / (self.fPdfDict["fitRangeMax"][0] - self.fPdfDict["fitRangeMin"][0])
             nBins = (fitRangeMax - fitRangeMin) * nbinsperGev
         
-            chi2 = ROOT.RooChi2Var("chi2", "chi2", pdf, rooDsBinned)
+            chi2 = ROOT.RooChi2Var("chi2", "chi2", pdf, rooDsBinned, False, ROOT.RooDataHist.SumW2)
             nPars = rooFitRes.floatParsFinal().getSize()
             ndof = nBins - nPars
             reduced_chi2 = chi2.getVal() / ndof
@@ -180,7 +179,7 @@ class DQFitter:
             nbinsperGev = rooDs.numEntries() / (self.fPdfDict["fitRangeMax"][0] - self.fPdfDict["fitRangeMin"][0])
             nBins = (fitRangeMax - fitRangeMin) * nbinsperGev
         
-            chi2 = ROOT.RooChi2Var("chi2", "chi2", pdf, rooDs)
+            chi2 = ROOT.RooChi2Var("chi2", "chi2", pdf, rooDs, False, ROOT.RooDataHist.SumW2)
             nPars = rooFitRes.floatParsFinal().getSize()
             ndof = nBins - nPars
             reduced_chi2 = chi2.getVal() / ndof
