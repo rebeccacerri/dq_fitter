@@ -48,20 +48,20 @@ def GenerateTutorialSample():
     counterSig1 = 0
     counterSig2 = 0
 
-    m = array('f', [0.])
+    fMass = array('f', [0.])
     tree = TTree("data", "data")
-    tree.Branch("m", m, "m/F")
+    tree.Branch("fMass", fMass, "fMass/F")
 
     for iEvent in range(0, nEvents):
         seed = gRandom.Rndm()
         if seed > SigOverBkg1:
-            m[0] = funcMassBkg.GetRandom()
+            fMass[0] = funcMassBkg.GetRandom()
         else:
             if seed > SigOverBkg2:
-                m[0] = funcMassSig1.GetRandom()
+                fMass[0] = funcMassSig1.GetRandom()
                 counterSig1 = counterSig1 + 1
             else:
-                m[0] = funcMassSig2.GetRandom()
+                fMass[0] = funcMassSig2.GetRandom()
                 counterSig2 = counterSig2 + 1
         tree.Fill()
     tree.Write()
