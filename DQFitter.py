@@ -136,7 +136,10 @@ class DQFitter:
         fRooPlotOff = self.fRooMass.frame(ROOT.RooFit.Title(trialName))
         if "TTree" in self.fInput.ClassName():
             print("########### Perform unbinned fit ###########")
-            rooDs = RooDataSet("data", "data", RooArgSet(self.fRooMass), ROOT.RooFit.Import(self.fInput))
+            if self.fPdfDict["sPlot"]["sRun"]:
+                sRooVar = RooRealVar(self.fPdfDict["sPlot"]["sVar"], self.fPdfDict["sPlot"]["sVarName"], self.fPdfDict["sPlot"]["sRangeMin"], self.fPdfDict["sPlot"]["sRangeMax"])
+                sRooVar.setBins(self.fPdfDict["sPlot"]["sBins"])
+            rooDs = RooDataSet("data", "data", RooArgSet(self.fRooMass, sRooVar), ROOT.RooFit.Import(self.fInput))
         else:
             print("########### Perform binned fit ###########")
             rooDs = RooDataHist("data", "data", RooArgSet(self.fRooMass), ROOT.RooFit.Import(self.fInput))
@@ -148,6 +151,34 @@ class DQFitter:
         #if fitMethod == "chi2":
             #print("########### Perform X2 fit ###########")
             #rooFitRes = ROOT.RooFitResult(pdf.chi2FitTo(rooDs, ROOT.RooFit.Range(fitRangeMin,fitRangeMax),ROOT.RooFit.PrintLevel(-1), ROOT.RooFit.Save()))
+
+        # Code to run sPlot
+        if ("TTree" in self.fInput.ClassName()) and self.fPdfDict["sPlot"]["sRun"]:
+            sPars = self.fPdfDict["sPlot"]["sPars"]
+            sRooPars = []
+            for iPar, sPar in enumerate(sPars):
+                sRooPars.append(self.fRooWorkspace.var(sPar))
+
+            # TO BE CHECKED: necessary to setConstant the other fit parameters?
+            sData = ROOT.RooStats.SPlot("sData", "An SPlot", rooDs, pdf, ROOT.RooArgList(*sRooPars))
+
+            getattr(self.fRooWorkspace, 'import')(rooDs, ROOT.RooFit.Rename("dataWithSWeights"))
+            sRooDs = self.fRooWorkspace.data("dataWithSWeights")
+
+            # Create a dataset with sWeights
+            dataSw = []
+            for iPar, sPar in enumerate(sPars):
+                dataSw.append(RooDataSet(sRooDs.GetName(), sRooDs.GetTitle(), sRooDs, sRooDs.get(), "", sPar + "_sw"))
+
+            # Fill histograms with sWeights
+            histSw = []
+            for iPar, sPar in enumerate(sPars):
+                histSw.append(dataSw[iPar].createHistogram(self.fPdfDict["sPlot"]["sVar"]))
+
+            # Write the histograms with sWeights
+            self.fFileOut.cd()
+            for iPar, sPar in enumerate(sPars):
+                histSw[iPar].Write(sPar + "_sw")
 
         rooDs.plotOn(fRooPlot, ROOT.RooFit.MarkerStyle(20), ROOT.RooFit.MarkerSize(0.6), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
         pdf.plotOn(fRooPlot, ROOT.RooFit.LineColor(ROOT.kRed+1), ROOT.RooFit.LineWidth(2), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
@@ -185,6 +216,7 @@ class DQFitter:
             reduced_chi2 = chi2.getVal() / ndof
 
         index = 1
+        #histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames)+6, 0., len(self.fParNames)+6)
         histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames)+4, 0., len(self.fParNames)+4)
         for parName in self.fParNames:
             histResults.GetXaxis().SetBinLabel(index, parName)
@@ -228,6 +260,15 @@ class DQFitter:
         fRooPlot.GetYaxis().SetTitleOffset(1.4)
         fRooPlot.Draw()
 
+        # Write sPlot result
+        #histResults.GetXaxis().SetBinLabel(index+4, "sig_sw")
+        #histResults.SetBinContent(index+4, sigSw)
+        #histResults.SetBinError(index+4, errSigSw)
+
+        #histResults.GetXaxis().SetBinLabel(index+5, "bkg_sw")
+        #histResults.SetBinContent(index+5, bkgSw)
+        #histResults.SetBinError(index+5, errBkgSw)
+
         for parName in self.fPdfDict["parForAlicePlot"]:
             if "sOverB_Jpsi" in parName:
                 sig_mean = self.fRooWorkspace.var("mean_Jpsi").getVal()
@@ -263,7 +304,7 @@ class DQFitter:
                 histResults.GetXaxis().SetBinLabel(index+3, "alpha_vn")
                 histResults.SetBinContent(index+3, alpha_vn)
             if "corrMatrStatus" in parName:
-                covMatrixStatus =rooFitRes.covQual()
+                covMatrixStatus = rooFitRes.covQual()
                 extraText.append("Cov. matrix status= %i" % covMatrixStatus)
         
         # Print the fit result
