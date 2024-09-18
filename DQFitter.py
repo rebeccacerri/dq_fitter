@@ -182,7 +182,6 @@ class DQFitter:
 
         rooDs.plotOn(fRooPlot, ROOT.RooFit.MarkerStyle(20), ROOT.RooFit.MarkerSize(0.6), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
         pdf.plotOn(fRooPlot, ROOT.RooFit.LineColor(ROOT.kRed+1), ROOT.RooFit.LineWidth(2), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
-        #pdf.plotOn(fRooPlot, ROOT.RooFit.VisualizeError(rooFitRes, 1), ROOT.RooFit.FillColor(ROOT.kRed-10), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
         rooDs.plotOn(fRooPlot, ROOT.RooFit.MarkerStyle(20), ROOT.RooFit.MarkerSize(0.6), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
         pdf.plotOn(fRooPlot, ROOT.RooFit.LineColor(ROOT.kRed+1), ROOT.RooFit.LineWidth(2), ROOT.RooFit.Range(fitRangeMin, fitRangeMax))
         for i in range(0, len(self.fPdfDict["pdf"])):
@@ -191,7 +190,7 @@ class DQFitter:
         
         reduced_chi2 = 0
         if "TTree" in self.fInput.ClassName():
-            #Fit with RooChi2Var
+            # Fit with RooChi2Var
             # To Do : Find a way to get the number of bins differently. The following is a temparary solution.
             # WARNING : The largest fit range has to come first in the config file otherwise it does not work
             # Convert unbinned dataset into binned dataset
@@ -204,7 +203,7 @@ class DQFitter:
             ndof = nBins - nPars
             reduced_chi2 = chi2.getVal() / ndof
         else:
-            #Fit with RooChi2Var
+            # Fit with RooChi2Var
             # To Do : Find a way to get the number of bins differently. The following is a temparary solution.
             # WARNING : The largest fit range has to come first in the config file otherwise it does not work
             nbinsperGev = rooDs.numEntries() / (self.fPdfDict["fitRangeMax"][0] - self.fPdfDict["fitRangeMin"][0])
@@ -216,7 +215,6 @@ class DQFitter:
             reduced_chi2 = chi2.getVal() / ndof
 
         index = 1
-        #histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames)+6, 0., len(self.fParNames)+6)
         histResults = TH1F("fit_results_{}_{}".format(trialName, self.fInputName), "fit_results_{}_{}".format(trialName, self.fInputName), len(self.fParNames)+4, 0., len(self.fParNames)+4)
         for parName in self.fParNames:
             histResults.GetXaxis().SetBinLabel(index, parName)
@@ -259,15 +257,6 @@ class DQFitter:
         gPad.SetLeftMargin(0.15)
         fRooPlot.GetYaxis().SetTitleOffset(1.4)
         fRooPlot.Draw()
-
-        # Write sPlot result
-        #histResults.GetXaxis().SetBinLabel(index+4, "sig_sw")
-        #histResults.SetBinContent(index+4, sigSw)
-        #histResults.SetBinError(index+4, errSigSw)
-
-        #histResults.GetXaxis().SetBinLabel(index+5, "bkg_sw")
-        #histResults.SetBinContent(index+5, bkgSw)
-        #histResults.SetBinError(index+5, errBkgSw)
 
         for parName in self.fPdfDict["parForAlicePlot"]:
             if "sOverB_Jpsi" in parName:
