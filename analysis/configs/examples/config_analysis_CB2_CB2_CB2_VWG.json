@@ -53,6 +53,16 @@
           "extraTextPos" : [0.75, 0.47],
           "legendPos" : [0.65, 0.60, 0.85, 0.89]
         },
+        "sPlot": {
+          "sRun" : true,
+          "sVar" : "fCos2DeltaPhi",
+          "sVarName" : "cos(2#Delta#phi)",
+          "sRangeMin" : -1,
+          "sRangeMax" : 1,
+          "sBins" : 20,
+          "sSig" : "sig_Upsilon1s",
+          "sBkg" : "bkg"
+        },
         "parForAlicePlot": ["mean_Upsilon1s", "width_Upsilon1s", "sig_Upsilon1s"],
         "parNameForAlicePlot": ["#mu_{#Upsilon(1S)}", "#sigma_{#Upsilon(1S)}", "#it{N}_{#Upsilon(1S)}"],
         "text": [
